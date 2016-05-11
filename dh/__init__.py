@@ -1,5 +1,6 @@
 from Crypto.Hash import SHA256
 from Crypto.Random import random
+from Crypto.Hash import SHA512
 
 from lib.helpers import read_hex
 
@@ -24,22 +25,26 @@ raw_prime = """FFFFFFFF FFFFFFFF C90FDAA2 2168C234 C4C6628B 80DC1CD1
 prime = read_hex(raw_prime)
 
 # Project TODO: write the appropriate code to perform DH key exchange
+# The generator
+g = 2
 
 def create_dh_key():
     # Creates a Diffie-Hellman key
     # Returns (public, private)
-    a = random.randint(0, int(2**8))
-    return (a, p)
+    #a = random.randint(0, int(2**8))
+    my_private = (random.randint(g,prime))
+    A = pow(g, my_private, prime)
+    #print(A)
+    return (A, my_private)
 
 def calculate_dh_secret(their_public, my_private):
     # Calculate the shared secret
-    shared_secret = their_public * my_private
-
+    shared_secret = pow(their_public, my_private,prime)
     # Hash the value so that:
     # (a) There's no bias in the bits of the output
     #     (there may be bias if the shared secret is used raw)
     # (b) We can convert to raw bytes easily
     # (c) We could add additional information if we wanted
     # Feel free to change SHA256 to a different value if more appropriate
-    shared_hash = SHA256.new(bytes(str(shared_secret), "ascii")).hexdigest()
+    shared_hash = SHA512.new(bytes(str(shared_secret), "ascii")).hexdigest()
     return shared_hash
