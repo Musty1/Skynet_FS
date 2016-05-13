@@ -32,7 +32,7 @@ def create_dh_key():
     # Creates a Diffie-Hellman key
     # Returns (public, private)
     #a = random.randint(0, int(2**8))
-    my_private = (random.randint(g,prime))
+    my_private = (random.randint(0,prime))
     A = pow(g, my_private, prime)
     #print(A)
     return (A, my_private)
