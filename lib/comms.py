@@ -17,6 +17,7 @@ class StealthConn(object):
         self.server = server
         self.verbose = verbose
         self.shared_hash = None
+        self.iv = None
         self.initiate_session()
 
 
@@ -35,19 +36,21 @@ class StealthConn(object):
             self.shared_hash = calculate_dh_secret(their_public_key, my_private_key)
             self.shared_hash = bytes.fromhex(self.shared_hash)
             print("Shared hash: {}".format(self.shared_hash))
-        iv = self.shared_hash[:16]    
-        self.cipher = AES.new(self.shared_hash, AES.MODE_CBC, iv)
+        self.iv = self.shared_hash[:16]
+        key = self.shared_hash[:16]    
+        self.cipher = AES.new(key, AES.MODE_CBC, self.iv)
         # Default XOR algorithm can only take a key of length 32
         #self.cipher = XOR.new(shared_hash[:4])
 
     def send(self, data):
-        data = ANSI_X923_pad(data, 16)
         if self.cipher:
+            data = ANSI_X923_pad(data, 16)
             encrypted_data = self.cipher.encrypt(data)
             if self.verbose:
                 print("Original data: {}".format(data))
                 print("Encrypted data: {}".format(repr(encrypted_data)))
                 print("Sending packet of length {}".format(len(encrypted_data)))
+                #Create a hmac and add it to the data.
                 hMac = HMAC.new(self.shared_hash)
                 hMac.update(data)
                 hashedData = bytes(hMac.digest() + data.decode("ascii"),"ascii")
@@ -74,6 +77,7 @@ class StealthConn(object):
                 print("Receiving packet of length {}".format(pkt_len))
                 print("Encrypted data: {}".format(repr(encrypted_data)))
                 print("Original data: {}".format(data))
+                #Get the data from the hmac
                 hMac = HMAC.new(self.shared_hash)
                 hmac = data[:h.digest_size*2]
                 data = data[hMac.digest_size*2:]
